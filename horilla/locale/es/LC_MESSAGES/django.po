@@ -4406,8 +4406,8 @@ msgstr "El {} se ha eliminado correctamente."
 msgid "{} not found."
 msgstr "{} no encontrado."
 
-msgid "Test mail from Horilla"
-msgstr "Correo de prueba de Horilla"
+msgid "Test mail from AdvanceHR"
+msgstr "Correo de prueba de AdvanceHR"
 
 msgid "Something went wrong :"
 msgstr "Algo salió mal:"
@@ -6821,11 +6821,11 @@ msgstr "El tamaño del archivo excede el límite"
 msgid "Please upload {} file only."
 msgstr "Por favor, sube solo {} archivo."
 
-msgid "LDAP to Horilla Employee Field Mapping"
-msgstr "LDAP a Mapeo de Campo de Empleados de Horilla"
+msgid "LDAP to AdvanceHR Employee Field Mapping"
+msgstr "LDAP a Mapeo de Campo de Empleados de AdvanceHR"
 
-msgid "Horilla Employee Field"
-msgstr "Campo de Horilla Empleado"
+msgid "AdvanceHR Employee Field"
+msgstr "Campo de AdvanceHR Empleado"
 
 msgid "LDAP Attribute Name"
 msgstr "Nombre del atributo LDAP"
@@ -11972,14 +11972,14 @@ msgstr "Hq"
 msgid "Go To Home"
 msgstr "Ir a Inicio"
 
-msgid "Authenticate with your password to initialize the Horilla HRMS database."
-msgstr "Autenticar con su contraseña para inicializar la base de datos HRMS de Horilla."
+msgid "Authenticate with your password to initialize the AdvanceHR database."
+msgstr "Autenticar con su contraseña para inicializar la base de datos HRMS de AdvanceHR."
 
 msgid "Sign Up"
 msgstr "Regístrate"
 
-msgid "Please sign up to access the Horilla HRMS."
-msgstr "Por favor, regístrate para acceder a Horilla HRMS."
+msgid "Please sign up to access AdvanceHR."
+msgstr "Por favor, regístrate para acceder a AdvanceHR."
 
 msgid "Secure Sign-up"
 msgstr "Registro seguro"

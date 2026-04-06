@@ -66,7 +66,7 @@ msgid "Default Accessibility"
 msgstr "Standard Bedienungshilfen"
 
 msgid "Limit default view access to horilla feature"
-msgstr "Standardzugriff auf Horilla-Funktion beschränken"
+msgstr "Standardzugriff auf AdvanceHR-Funktion beschränken"
 
 msgid "Actions"
 msgstr "Aktionen"
@@ -2232,7 +2232,7 @@ msgid "Automatic Check Out Time"
 msgstr "Automatische Checkout-Zeit"
 
 msgid "Time at which the horilla will automatically check out the employee attendance if they forget."
-msgstr "Zeit zu der die Horilla automatisch die Anwesenheit der Angestellten überprüft, wenn sie vergessen."
+msgstr "Zeit zu der die AdvanceHR automatisch die Anwesenheit der Angestellten überprüft, wenn sie vergessen."
 
 msgid "Employee Shift Schedule"
 msgstr "Schichtplan für Mitarbeiter"
@@ -4406,8 +4406,8 @@ msgstr "{} wurde erfolgreich gelöscht."
 msgid "{} not found."
 msgstr "{} nicht gefunden."
 
-msgid "Test mail from Horilla"
-msgstr "Test-Mail von Horilla"
+msgid "Test mail from AdvanceHR"
+msgstr "Test-Mail von AdvanceHR"
 
 msgid "Something went wrong :"
 msgstr "Etwas ist schief gelaufen:"
@@ -6821,11 +6821,11 @@ msgstr "Dateigröße überschreitet das Limit"
 msgid "Please upload {} file only."
 msgstr "Bitte laden Sie nur {} Datei hoch."
 
-msgid "LDAP to Horilla Employee Field Mapping"
-msgstr "LDAP to Horilla Employee Field Mapping"
+msgid "LDAP to AdvanceHR Employee Field Mapping"
+msgstr "LDAP to AdvanceHR Employee Field Mapping"
 
-msgid "Horilla Employee Field"
-msgstr "Horilla-Mitarbeiterfeld"
+msgid "AdvanceHR Employee Field"
+msgstr "AdvanceHR-Mitarbeiterfeld"
 
 msgid "LDAP Attribute Name"
 msgstr "LDAP-Attributname"
@@ -11972,14 +11972,14 @@ msgstr "HK"
 msgid "Go To Home"
 msgstr "Gehe zu Home"
 
-msgid "Authenticate with your password to initialize the Horilla HRMS database."
-msgstr "Authentifizieren Sie sich mit Ihrem Passwort, um die Horilla HRMS Datenbank zu initialisieren."
+msgid "Authenticate with your password to initialize the AdvanceHR database."
+msgstr "Authentifizieren Sie sich mit Ihrem Passwort, um die AdvanceHR Datenbank zu initialisieren."
 
 msgid "Sign Up"
 msgstr "Registrieren"
 
-msgid "Please sign up to access the Horilla HRMS."
-msgstr "Bitte melden Sie sich an um auf das Horilla HRMS zuzugreifen."
+msgid "Please sign up to access AdvanceHR."
+msgstr "Bitte melden Sie sich an um auf das AdvanceHR zuzugreifen."
 
 msgid "Secure Sign-up"
 msgstr "Sichere Registrierung"

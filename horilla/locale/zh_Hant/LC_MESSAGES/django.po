@@ -66,7 +66,7 @@ msgid "Default Accessibility"
 msgstr "預設可訪問性"
 
 msgid "Limit default view access to horilla feature"
-msgstr "限制預設檢視存取至 Horilla 功能"
+msgstr "限制預設檢視存取至 AdvanceHR 功能"
 
 msgid "Actions"
 msgstr "操作"
@@ -5204,8 +5204,8 @@ msgstr "{} 已成功刪除。"
 msgid "{} not found."
 msgstr "{} 未找到。"
 
-msgid "Test mail from Horilla"
-msgstr "來自 Horilla 的測試郵件"
+msgid "Test mail from AdvanceHR"
+msgstr "來自 AdvanceHR 的測試郵件"
 
 msgid "Something went wrong :"
 msgstr "出了點問題："
@@ -14534,14 +14534,14 @@ msgid "Go To Home"
 msgstr "轉至首頁"
 
 msgid ""
-"Authenticate with your password to initialize the Horilla HRMS database."
-msgstr "使用您的密碼進行身份驗證以初始化 Horilla HRMS 資料庫。"
+"Authenticate with your password to initialize the AdvanceHR database."
+msgstr "使用您的密碼進行身份驗證以初始化 AdvanceHR 資料庫。"
 
 msgid "Sign Up"
 msgstr "報名"
 
-msgid "Please sign up to access the Horilla HRMS."
-msgstr "請註冊以存取 Horilla HRMS。"
+msgid "Please sign up to access AdvanceHR."
+msgstr "請註冊以存取 AdvanceHR。"
 
 msgid "Secure Sign-up"
 msgstr "安全註冊"

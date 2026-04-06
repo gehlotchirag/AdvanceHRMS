@@ -4406,7 +4406,7 @@ msgstr "تم حذف {} بنجاح."
 msgid "{} not found."
 msgstr "{} غير موجود."
 
-msgid "Test mail from Horilla"
+msgid "Test mail from AdvanceHR"
 msgstr "اختبار البريد الإلكتروني من هوريلا"
 
 msgid "Something went wrong :"
@@ -6821,10 +6821,10 @@ msgstr "حجم الملف يتجاوز الحد الأقصى"
 msgid "Please upload {} file only."
 msgstr "الرجاء تحميل ملف {} فقط."
 
-msgid "LDAP to Horilla Employee Field Mapping"
+msgid "LDAP to AdvanceHR Employee Field Mapping"
 msgstr "LDAP إلى خرائط حقل موظفي هوريلا"
 
-msgid "Horilla Employee Field"
+msgid "AdvanceHR Employee Field"
 msgstr "حقل موظفي الهوريلا"
 
 msgid "LDAP Attribute Name"
@@ -11972,13 +11972,13 @@ msgstr "مربع"
 msgid "Go To Home"
 msgstr "الذهاب إلى الصفحة الرئيسية"
 
-msgid "Authenticate with your password to initialize the Horilla HRMS database."
+msgid "Authenticate with your password to initialize the AdvanceHR database."
 msgstr "المصادقة مع كلمة المرور الخاصة بك لتهيئة قاعدة بيانات HRMS هوريا."
 
 msgid "Sign Up"
 msgstr "تسجيل الدخول"
 
-msgid "Please sign up to access the Horilla HRMS."
+msgid "Please sign up to access AdvanceHR."
 msgstr "الرجاء التسجيل للوصول إلى نظام هوريلا HRMS."
 
 msgid "Secure Sign-up"

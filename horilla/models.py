@@ -2,7 +2,7 @@
 models.py
 =========
 
-This module defines the abstract base model `HorillaModel` for the Horilla HRMS project.
+This module defines the abstract base model `HorillaModel` for the AdvanceHR project.
 The `HorillaModel` provides common fields and functionalities for other models within
 the application, such as tracking creation and modification timestamps and user
 information, audit logging, and active/inactive status management.

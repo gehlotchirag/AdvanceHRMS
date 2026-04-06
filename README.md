@@ -1,4 +1,6 @@
-# Horilla HRMS
+# AdvanceHR
+
+Human Resource Management System branded as **AdvanceHR**, based on the open-source [Horilla HRMS](https://github.com/horilla-opensource/horilla) (LGPL-2.1).
 
 [![License: LGPL v2.1](https://img.shields.io/badge/License-LGPL%20v2.1-blue.svg)](https://www.gnu.org/licenses/lgpl-2.1)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -37,9 +39,9 @@
 ### Using Docker (Recommended)
 
 ```bash
-# Clone the repository
-git clone -b release/v2.0.0-beta https://github.com/horilla-opensource/horilla.git
-cd horilla
+# Clone the repository (example: into a folder named AdvanceHR)
+git clone -b release/v2.1.0-beta https://github.com/horilla-opensource/horilla.git AdvanceHR
+cd AdvanceHR
 
 # Start with Docker Compose
 docker-compose up -d
@@ -52,8 +54,8 @@ open http://localhost:8000
 
 ```bash
 # Clone and setup
-git clone -b release/v2.0.0-beta https://github.com/horilla-opensource/horilla.git
-cd horilla
+git clone -b release/v2.1.0-beta https://github.com/horilla-opensource/horilla.git AdvanceHR
+cd AdvanceHR
 
 # Create virtual environment
 python3 -m venv venv
@@ -106,8 +108,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Fork and clone your fork
-git clone -b release/v2.0.0-beta https://github.com/YOUR_USERNAME/horilla.git
-cd horilla
+git clone -b release/v2.1.0-beta https://github.com/YOUR_USERNAME/horilla.git AdvanceHR
+cd AdvanceHR
 
 # Add upstream remote
 git remote add upstream https://github.com/horilla-opensource/horilla.git
@@ -140,7 +142,7 @@ pip install -r requirements.txt
 
 ### Reporting Security Issues
 
-Please report security vulnerabilities to **support@horilla.com**. Do not create public GitHub issues for security vulnerabilities.
+Please report security vulnerabilities to **support@example.com**. Do not create public GitHub issues for security vulnerabilities.
 
 ### Security Best Practices
 
@@ -161,7 +163,7 @@ Please report security vulnerabilities to **support@horilla.com**. Do not create
 ### Professional Support
 
 For enterprise support, custom development, and consulting services:
-- 📧 **Email**: support@horilla.com
+- 📧 **Email**: support@example.com
 - 🌐 **Website**: [www.horilla.com](https://www.horilla.com)
 
 
@@ -171,7 +173,7 @@ This project is licensed under the [LGPL-2.1 License](LICENSE) - see the LICENSE
 
 <div align="center">
 
-**Made with ❤️ by the Horilla Team**
+**Made with ❤️ by the AdvanceHR team**
 
 [⭐ Star us on GitHub](https://github.com/horilla-opensource/horilla) | [🐛 Report Bug](https://github.com/horilla-opensource/horilla/issues) | [💡 Request Feature](https://github.com/horilla-opensource/horilla/issues)
 

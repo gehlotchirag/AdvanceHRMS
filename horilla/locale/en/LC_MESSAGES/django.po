@@ -5415,7 +5415,7 @@ msgstr ""
 msgid "{} not found."
 msgstr ""
 
-msgid "Test mail from Horilla"
+msgid "Test mail from AdvanceHR"
 msgstr ""
 
 msgid "Something went wrong :"
@@ -15021,13 +15021,13 @@ msgid "Go To Home"
 msgstr ""
 
 msgid ""
-"Authenticate with your password to initialize the Horilla HRMS database."
+"Authenticate with your password to initialize the AdvanceHR database."
 msgstr ""
 
 msgid "Sign Up"
 msgstr ""
 
-msgid "Please sign up to access the Horilla HRMS."
+msgid "Please sign up to access AdvanceHR."
 msgstr ""
 
 msgid "Secure Sign-up"
@@ -15459,7 +15459,7 @@ msgstr ""
 
 #, fuzzy
 #~| msgid "recruitment"
-#~ msgid "Horilla - Open Recruitments"
+#~ msgid "AdvanceHR - Open Recruitments"
 #~ msgstr "Recruitment"
 
 #, fuzzy
