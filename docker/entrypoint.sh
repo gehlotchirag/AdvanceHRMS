@@ -9,10 +9,14 @@ wait_for_postgres() {
     return 0
   fi
 
-  # On Railway, TCP probes with `nc` often do not match how Postgres is exposed (internal DNS,
-  # proxy, IPv6). Waiting here can loop forever while health checks fail. Django connects when needed.
-  if [ -n "${RAILWAY_ENVIRONMENT:-}" ] && [ -z "${FORCE_DB_WAIT:-}" ]; then
-    echo "RAILWAY_ENVIRONMENT is set; skipping TCP wait for Postgres (set FORCE_DB_WAIT=1 to enable)."
+  # On Railway, TCP probes with `nc` often do not match how Postgres is exposed. Not all Railway
+  # runtimes set RAILWAY_ENVIRONMENT — also check common Railway-only variables.
+  _on_railway=false
+  if [ -n "${RAILWAY_ENVIRONMENT:-}" ] || [ -n "${RAILWAY_PROJECT_ID:-}" ] || [ -n "${RAILWAY_SERVICE_ID:-}" ] || [ -n "${RAILWAY_REPLICA_ID:-}" ]; then
+    _on_railway=true
+  fi
+  if [ "$_on_railway" = true ] && [ -z "${FORCE_DB_WAIT:-}" ]; then
+    echo "Railway detected; skipping TCP wait for Postgres (set FORCE_DB_WAIT=1 to force nc wait)."
     return 0
   fi
 
