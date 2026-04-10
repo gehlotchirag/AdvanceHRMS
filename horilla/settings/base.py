@@ -53,6 +53,21 @@ else:
         _derived_origins = ["http://localhost:8000", "http://127.0.0.1:8000"]
     CSRF_TRUSTED_ORIGINS = _derived_origins
 
+# Railway (and similar): allow the generated public hostname for HTTPS / CSRF.
+_railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
+if _railway_domain:
+    _railway_domain = (
+        _railway_domain.removeprefix("https://")
+        .removeprefix("http://")
+        .split("/")[0]
+    )
+    if _railway_domain:
+        if "*" not in ALLOWED_HOSTS and _railway_domain not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS = [*ALLOWED_HOSTS, _railway_domain]
+        _railway_origin = f"https://{_railway_domain}"
+        if _railway_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS = [*CSRF_TRUSTED_ORIGINS, _railway_origin]
+
 THEME_APP = "horilla_theme"
 
 INSTALLED_APPS = [

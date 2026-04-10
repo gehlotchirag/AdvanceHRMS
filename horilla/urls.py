@@ -33,6 +33,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
+    # Must be before path("", include(...)) or /health/ is handled by included URLconfs
+    # and never reaches this line, breaking load balancer / Railway health checks.
+    path("health/", health_check),
     path("", include("base.urls")),
     path("", include("horilla_automations.urls")),
     path("", include("horilla_views.urls")),
@@ -43,7 +46,6 @@ urlpatterns = [
     ),
     path("i18n/", include("django.conf.urls.i18n")),
     path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
-    path("health/", health_check),
 ]
 
 # if settings.DEBUG:
