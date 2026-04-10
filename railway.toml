@@ -5,7 +5,8 @@ buildCommand = "pip install -r requirements.txt && python manage.py collectstati
 
 [deploy]
 preDeployCommand = "python manage.py migrate --noinput"
-startCommand = "gunicorn horilla.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120"
+# Bind uses PORT via docker/gunicorn.conf.py (os.environ) — Railway does not expand $PORT in startCommand without a shell.
+startCommand = "gunicorn horilla.wsgi:application --config docker/gunicorn.conf.py"
 healthcheckPath = "/health/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
