@@ -32,15 +32,20 @@ Railway sets `PORT` and usually `RAILWAY_PUBLIC_DOMAIN` when you assign a public
 
 ## 5. Docker image on Railway (Dockerfile)
 
-The default `docker/entrypoint.sh` runs **migrate** and **collectstatic** before Gunicorn starts. Until that finishes, nothing listens on `PORT`, so health checks can show **service unavailable** (503) for a long time on large databases.
+`docker/entrypoint.sh` runs **migrate** (unless skipped) and **collectstatic** before Gunicorn. Long **migrate** runs delay binding to `PORT`, so health checks can show **service unavailable** (503).
 
-**Recommended:** In the **web** service, set variable `SKIP_STARTUP_MIGRATE` = `1`. Add a **Release Command** (Deploy → Release Command) on the same service:
+**Recommended:**
 
-```bash
-python manage.py migrate --noinput && python manage.py collectstatic --noinput
-```
+1. In the **web** service → **Variables**, set **`SKIP_STARTUP_MIGRATE`** = **`1`**.
+2. In the same service → **Settings** → **Deploy** → find **Pre-deploy command** (or **Add pre-deploy step**) and set:
 
-Release runs **before** the new container is promoted, so the app is migrated while the old container still serves traffic, then Gunicorn starts quickly and `/health/` can pass immediately.
+   ```bash
+   python manage.py migrate --noinput
+   ```
+
+   Railway runs this **after the image is built** and **before** the new deployment is considered healthy. It uses your service env vars (including `DATABASE_URL`). Use **migrate only** here — not `collectstatic`, because [pre-deploy runs in a separate container whose filesystem is not kept](https://docs.railway.app/deployments/pre-deploy-command); **collectstatic** still runs in `entrypoint.sh` on each web container start.
+
+3. Redeploy.
 
 ## 6. Media / uploads
 
