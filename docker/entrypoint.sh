@@ -32,8 +32,17 @@ wait_for_postgres() {
 
 wait_for_postgres
 
-python manage.py migrate --noinput
-python manage.py collectstatic --noinput
+# Migrations + collectstatic block Gunicorn from binding to $PORT. Railway's health
+# check returns "service unavailable" until something listens. Options:
+# - Set SKIP_STARTUP_MIGRATE=1 and run migrations via Railway **Deploy → Release Command**:
+#     python manage.py migrate --noinput && python manage.py collectstatic --noinput
+# - Or leave unset (default) and accept a slower first boot / widen health check delay.
+if [ -z "${SKIP_STARTUP_MIGRATE:-}" ]; then
+  python manage.py migrate --noinput
+  python manage.py collectstatic --noinput
+else
+  echo "SKIP_STARTUP_MIGRATE is set; skipping migrate/collectstatic (use release command)."
+fi
 
 echo "Starting server..."
 exec "$@"

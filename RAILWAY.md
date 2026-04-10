@@ -30,11 +30,23 @@ Railway sets `PORT` and usually `RAILWAY_PUBLIC_DOMAIN` when you assign a public
 
 **Settings** → **Networking** → **Generate domain**. Open the URL; migrations run on deploy via `preDeployCommand` in `railway.toml`.
 
-## 5. Media / uploads
+## 5. Docker image on Railway (Dockerfile)
+
+The default `docker/entrypoint.sh` runs **migrate** and **collectstatic** before Gunicorn starts. Until that finishes, nothing listens on `PORT`, so health checks can show **service unavailable** (503) for a long time on large databases.
+
+**Recommended:** In the **web** service, set variable `SKIP_STARTUP_MIGRATE` = `1`. Add a **Release Command** (Deploy → Release Command) on the same service:
+
+```bash
+python manage.py migrate --noinput && python manage.py collectstatic --noinput
+```
+
+Release runs **before** the new container is promoted, so the app is migrated while the old container still serves traffic, then Gunicorn starts quickly and `/health/` can pass immediately.
+
+## 6. Media / uploads
 
 The container filesystem is **ephemeral**. For production file uploads, configure cloud storage (see `.env.dist` GCP section) or Railway **Volumes** and point `MEDIA_ROOT` accordingly.
 
-## 6. First login
+## 7. First login
 
 Complete the in-app database initialization wizard if prompted, or create a superuser from Railway **Shell**:
 
