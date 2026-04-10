@@ -20,10 +20,11 @@ env = environ.Env(
     DEBUG=(bool, True),
     SECRET_KEY=(str, "django-insecure-default-key"),
     ALLOWED_HOSTS=(list, ["*"]),
-    CSRF_TRUSTED_ORIGINS=(list, ["http://localhost:8000"]),
+    CSRF_TRUSTED_ORIGINS=(list, []),
 )
 
-env.read_env(os.path.join(BASE_DIR, ".env"), overwrite=True)
+# Read .env file if present (local dev); on Railway env vars are injected directly
+env.read_env(os.path.join(BASE_DIR, ".env"), overwrite=False)
 
 # ========================================
 # CORE DJANGO SETTINGS
@@ -31,7 +32,26 @@ env.read_env(os.path.join(BASE_DIR, ".env"), overwrite=True)
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
+
+# Build CSRF_TRUSTED_ORIGINS: use explicit env var if set, otherwise derive
+# from ALLOWED_HOSTS so Railway / any deployment works without extra config.
+_csrf_origins_env = env("CSRF_TRUSTED_ORIGINS")
+if _csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS = _csrf_origins_env
+else:
+    _derived_origins = []
+    for _host in ALLOWED_HOSTS:
+        if _host == "*":
+            continue
+        if not _host.startswith(("http://", "https://")):
+            _derived_origins.append(f"https://{_host}")
+            _derived_origins.append(f"http://{_host}")
+        else:
+            _derived_origins.append(_host)
+    # Always include localhost for local dev
+    if not _derived_origins:
+        _derived_origins = ["http://localhost:8000", "http://127.0.0.1:8000"]
+    CSRF_TRUSTED_ORIGINS = _derived_origins
 
 THEME_APP = "horilla_theme"
 
@@ -165,6 +185,26 @@ else:
     }
 
 # ========================================
+# CACHE CONFIGURATION
+# ========================================
+_redis_url = env("REDIS_URL", default=None)
+if _redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _redis_url,
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+
+# ========================================
 # STATIC & MEDIA FILES
 # ========================================
 STATIC_URL = "static/"
@@ -190,6 +230,16 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = "horilla_auth.HorillaUser"
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
+
+# Trust Railway's (and other reverse-proxy) X-Forwarded-Proto header so
+# Django knows the request arrived over HTTPS even though Gunicorn sees HTTP.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# In production (DEBUG=False) enforce secure cookies so sessions and CSRF
+# tokens are only sent over HTTPS.
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # ========================================
 # TEMPLATES
