@@ -47,6 +47,8 @@ Railway sets `PORT` and usually `RAILWAY_PUBLIC_DOMAIN` when you assign a public
 
 3. Redeploy.
 
+**Docker / stuck health checks:** If deploy logs show **service unavailable** for the full health-check window, the container may be stuck in **`nc` waiting for Postgres**. On Railway, TCP checks do not always match Postgres connectivity; `docker/entrypoint.sh` **skips that wait** when `RAILWAY_ENVIRONMENT` is set (Railway injects this). To force the old wait, set **`FORCE_DB_WAIT=1`**.
+
 ## 6. Media / uploads
 
 The container filesystem is **ephemeral**. For production file uploads, configure cloud storage (see `.env.dist` GCP section) or Railway **Volumes** and point `MEDIA_ROOT` accordingly.
