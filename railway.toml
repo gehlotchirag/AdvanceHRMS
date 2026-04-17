@@ -5,8 +5,10 @@ buildCommand = "pip install -r requirements.txt && python manage.py collectstati
 
 [deploy]
 preDeployCommand = "python manage.py migrate --noinput"
-# Bind uses PORT via docker/gunicorn.conf.py (os.environ) — Railway does not expand $PORT in startCommand without a shell.
-startCommand = "gunicorn horilla.wsgi:application --config docker/gunicorn.conf.py"
+# Railway's startCommand replaces the image CMD; it must still run docker/entrypoint.sh or
+# collectstatic never runs and STATIC_ROOT stays empty → 404 on all /static/ assets.
+# Bind uses PORT via docker/gunicorn.conf.py (os.environ).
+startCommand = "/entrypoint.sh gunicorn horilla.wsgi:application --config docker/gunicorn.conf.py"
 healthcheckPath = "/health/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
