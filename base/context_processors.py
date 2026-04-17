@@ -48,12 +48,22 @@ def get_last_section(path):
     return last_section
 
 
+def _company_icon_url(company):
+    """Avoid ValueError when Company.icon is empty (null file) — breaks every page render."""
+    if not company.icon:
+        return "https://ui-avatars.com/api/?name=Company&background=random"
+    try:
+        return company.icon.url
+    except ValueError:
+        return "https://ui-avatars.com/api/?name=Company&background=random"
+
+
 def get_companies(request):
     """
     This method will return the history additional field form
     """
     companies = list(
-        [company.id, company.company, company.icon.url, False]
+        [company.id, company.company, _company_icon_url(company), False]
         for company in Company.objects.all()
     )
     companies = [
