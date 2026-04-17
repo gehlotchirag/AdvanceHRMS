@@ -20,7 +20,9 @@ class HealthCheckMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.path.rstrip("/") == "health" and request.method in ("GET", "HEAD"):
+        # strip("/") so "/health/" and "/health" both normalize to "health" (rstrip alone
+        # yields "/health" which never matched "health", breaking Railway health checks).
+        if request.path.strip("/") == "health" and request.method in ("GET", "HEAD"):
             if request.method == "HEAD":
                 return HttpResponse(status=200)
             return JsonResponse({"status": "ok"}, status=200)
