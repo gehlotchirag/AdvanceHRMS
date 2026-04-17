@@ -258,7 +258,10 @@ def initialize_database_condition():
         init_database = True
         superusers = HorillaUser.objects.filter(is_superuser=True)
         for user in superusers:
-            if hasattr(user, "employee_get"):
+            # Do not use hasattr(user, "employee_get"): the reverse OneToOne
+            # descriptor raises RelatedObjectDoesNotExist (not AttributeError),
+            # which hasattr does not suppress — causing 500 on login and home.
+            if Employee.objects.filter(employee_user_id=user).exists():
                 init_database = False
                 break
     return init_database
@@ -357,7 +360,7 @@ def initialize_database_user(request):
         email = form_data.get("email")
         phone = form_data.get("phone")
         user = HorillaUser.objects.filter(username=username).first()
-        if user and not hasattr(user, "employee_get"):
+        if user and not Employee.objects.filter(employee_user_id=user).exists():
             user.delete()
         user = HorillaUser.objects.create_superuser(
             username=username, email=email, password=password
