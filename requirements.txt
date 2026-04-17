@@ -55,6 +55,7 @@ PyYAML
 pyzk==0.9
 qrcode
 reportlab==4.0.9
+redis
 requests
 responses
 setuptools
