@@ -54,6 +54,8 @@ from rest_framework_simplejwt.tokens import UntypedToken
 from accessibility.accessibility import ACCESSBILITY_FEATURE
 from accessibility.models import DefaultAccessibility
 from base.backends import ConfiguredEmailBackend
+from base.db_init import initialize_database_condition
+from base.demo_fixtures import demo_fixture_filenames
 from base.decorators import (
     shift_request_change_permission,
     work_type_request_change_permission,
@@ -242,59 +244,11 @@ def is_reportingmanger(request, instance):
     return manager == employee_work_info_manager
 
 
-def initialize_database_condition():
-    """
-    Determines if the database initialization process should be triggered.
-
-    This function checks whether there are any users in the database. If there are no users,
-    or if there are superusers without associated employees, it indicates that the database
-    needs to be initialized.
-
-    Returns:
-        bool: True if the database needs to be initialized, False otherwise.
-    """
-    init_database = not HorillaUser.objects.exists()
-    if not init_database:
-        init_database = True
-        superusers = HorillaUser.objects.filter(is_superuser=True)
-        for user in superusers:
-            # Do not use hasattr(user, "employee_get"): the reverse OneToOne
-            # descriptor raises RelatedObjectDoesNotExist (not AttributeError),
-            # which hasattr does not suppress — causing 500 on login and home.
-            if Employee.objects.filter(employee_user_id=user).exists():
-                init_database = False
-                break
-    return init_database
-
-
 def load_demo_database(request):
     if initialize_database_condition():
         if request.method == "POST":
             if request.POST.get("load_data_password") == settings.DB_INIT_PASSWORD:
-                data_files = [
-                    "user_data.json",
-                    "employee_info_data.json",
-                    "base_data.json",
-                    "work_info_data.json",
-                ]
-                optional_apps = [
-                    ("attendance", "attendance_data.json"),
-                    ("leave", "leave_data.json"),
-                    ("asset", "asset_data.json"),
-                    ("recruitment", "recruitment_data.json"),
-                    ("onboarding", "onboarding_data.json"),
-                    ("offboarding", "offboarding_data.json"),
-                    ("pms", "pms_data.json"),
-                    ("payroll", "payroll_data.json"),
-                    ("payroll", "payroll_loanaccount_data.json"),
-                    ("project", "project_data.json"),
-                ]
-
-                # Add data files for installed apps
-                data_files += [
-                    file for app, file in optional_apps if apps.is_installed(app)
-                ]
-
+                data_files = demo_fixture_filenames()
                 # Single loaddata invocation (ordered) — faster than N separate commands.
                 fixture_paths = [
                     path.join(settings.BASE_DIR, "load_data", f) for f in data_files

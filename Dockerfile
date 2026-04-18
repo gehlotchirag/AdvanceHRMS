@@ -70,9 +70,16 @@ COPY --chown=appuser:appuser . .
 COPY --chown=appuser:appuser docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Create necessary directories and set permissions
+# Bake static files into the image so the container reaches Gunicorn faster (fewer 502s
+# during deploy while migrate/collectstatic would otherwise block PORT).
 RUN mkdir -p staticfiles media \
-    && chown -R appuser:appuser /app
+    && DJANGO_SETTINGS_MODULE=horilla.settings \
+       SECRET_KEY=build-collectstatic-placeholder \
+       DEBUG=False \
+       python manage.py collectstatic --noinput
+
+# Create necessary directories and set permissions
+RUN chown -R appuser:appuser /app
 
 USER appuser
 

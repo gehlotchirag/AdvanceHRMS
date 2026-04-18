@@ -9,22 +9,26 @@ bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
 host = "0.0.0.0"
 port = int(os.environ.get("PORT", "8000"))
 
-# Worker settings
-workers = int(
-    os.environ.get(
-        "GUNICORN_WORKERS", max(2, min(multiprocessing.cpu_count() * 2 + 1, 8))
-    )
-)
+# Worker settings — cap default workers to reduce OOM 502s on small Railway plans.
+_cpu = max(2, min(multiprocessing.cpu_count() * 2 + 1, 8))
+_default_workers = min(_cpu, int(os.environ.get("GUNICORN_MAX_WORKERS_DEFAULT", "4")))
+workers = int(os.environ.get("GUNICORN_WORKERS", str(_default_workers)))
 worker_class = "gthread"
-threads = 4
+threads = int(os.environ.get("GUNICORN_THREADS", "4"))
 worker_connections = 1000
 max_requests = 1000
 max_requests_jitter = 50
-preload_app = True
+preload_app = os.environ.get("GUNICORN_PRELOAD_APP", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+)
 
-# Timeout settings — demo DB load (loaddata) can exceed 120s; Railway allows up to ~15m edge-side.
+# Timeout settings — long requests (e.g. loaddata via UI); Railway HTTP max ~15m.
 timeout = int(os.environ.get("GUNICORN_TIMEOUT", "900"))
-graceful_timeout = int(os.environ.get("GUNICORN_GRACEFUL_TIMEOUT", "120"))
+graceful_timeout = int(
+    os.environ.get("GUNICORN_GRACEFUL_TIMEOUT", str(max(timeout, 30)))
+)
 keepalive = 5
 
 # Logging
