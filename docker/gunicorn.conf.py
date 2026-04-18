@@ -22,8 +22,9 @@ max_requests = 1000
 max_requests_jitter = 50
 preload_app = True
 
-# Timeout settings
-timeout = 120
+# Timeout settings — demo DB load (loaddata) can exceed 120s; Railway allows up to ~15m edge-side.
+timeout = int(os.environ.get("GUNICORN_TIMEOUT", "900"))
+graceful_timeout = int(os.environ.get("GUNICORN_GRACEFUL_TIMEOUT", "120"))
 keepalive = 5
 
 # Logging

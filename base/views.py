@@ -295,18 +295,18 @@ def load_demo_database(request):
                     file for app, file in optional_apps if apps.is_installed(app)
                 ]
 
-                # Load all data files
-                for file in data_files:
-                    file_path = path.join(settings.BASE_DIR, "load_data", file)
-                    try:
-                        call_command("loaddata", file_path)
-                    except Exception as e:
-                        messages.error(request, f"An error occured : {e}")
-
-                messages.success(request, _("Database loaded successfully."))
+                # Single loaddata invocation (ordered) — faster than N separate commands.
+                fixture_paths = [
+                    path.join(settings.BASE_DIR, "load_data", f) for f in data_files
+                ]
+                try:
+                    call_command("loaddata", *fixture_paths, verbosity=0)
+                    messages.success(request, _("Database loaded successfully."))
+                except Exception as e:
+                    messages.error(request, _("An error occurred: %(err)s") % {"err": e})
             else:
                 messages.error(request, _("Database Authentication Failed"))
-        return redirect(home)
+        return redirect("home-page")
     return redirect("/")
 
 
