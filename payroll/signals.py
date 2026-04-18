@@ -36,10 +36,15 @@ def employeeworkinformation_pre_save(sender, instance, **_kwargs):
 
 
 @receiver(post_save, sender=LoanAccount)
-def create_installments(sender, instance, created, **kwargs):
+def create_installments(sender, instance, created, raw=False, **kwargs):
     """
     Post save method for loan account
+
+    Skip when ``raw=True`` (fixture / loaddata): deserialization already sets
+    allowance_id and deduction_ids; running this would create duplicate Deduction rows.
     """
+    if raw:
+        return
     installments = []
     asset = True
     if apps.is_installed("asset"):
