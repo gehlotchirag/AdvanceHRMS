@@ -12,7 +12,7 @@
       "employee_id": 18,
       "loan_amount": 60000.0,
       "provided_date": "2025-07-01",
-      "allowance_id": 5,
+      "allowance_id": 4,
       "description": "Loan for parents medical case",
       "is_fixed": true,
       "rate": 0.0,
