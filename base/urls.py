@@ -155,6 +155,7 @@ urlpatterns = [
     ),
     path("initialize-database", views.initialize_database, name="initialize-database"),
     path("load-demo-database", views.load_demo_database, name="load-demo-database"),
+    path("reset-database", views.reset_database, name="reset-database"),
     path(
         "initialize-database-user",
         views.initialize_database_user,

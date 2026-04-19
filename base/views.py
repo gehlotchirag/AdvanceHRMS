@@ -244,6 +244,23 @@ def is_reportingmanger(request, instance):
     return manager == employee_work_info_manager
 
 
+def reset_database(request):
+    """Flush all application data so the DB returns to a fresh state."""
+    if request.method == "POST":
+        if request.POST.get("reset_password") == settings.DB_INIT_PASSWORD:
+            try:
+                call_command("flush", interactive=False, verbosity=0)
+                messages.success(
+                    request,
+                    _("Database reset successfully. You can now initialize or load demo data."),
+                )
+            except Exception as e:
+                messages.error(request, _("Reset failed: %(err)s") % {"err": e})
+        else:
+            messages.error(request, _("Database Authentication Failed"))
+    return redirect("login")
+
+
 def load_demo_database(request):
     if initialize_database_condition():
         if request.method == "POST":
