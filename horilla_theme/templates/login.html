@@ -154,6 +154,38 @@
                         {% include "demo_database/auth_load_data.html" %}
                     </div>
                 </div>
+                {% else %}
+                <div class="mt-2 text-center">
+                    <a onclick="$('#resetDatabaseModal').toggleClass('oh-modal--show');"
+                        class="oh-link oh-link--secondary justify-content-center" style="cursor:pointer; font-size:0.85rem;">
+                        {% trans "Reset Database" %}
+                    </a>
+                </div>
+                <div class="oh-modal" id="resetDatabaseModal" role="dialog" aria-hidden="true" style="backdrop-filter: blur(8px);">
+                    <div class="oh-modal__dialog">
+                        <div class="oh-modal__dialog-header">
+                            <h6 class="oh-modal__dialog-title">{% trans "Reset Database" %}</h6>
+                            <button onclick="$('#resetDatabaseModal').toggleClass('oh-modal--show');" type="button" class="oh-modal__close-btn">
+                                <ion-icon name="close-outline"></ion-icon>
+                            </button>
+                        </div>
+                        <div class="oh-modal__dialog-body">
+                            <p class="text-danger">{% trans "This will delete ALL data and reset the database to a blank state." %}</p>
+                            <form method="post" action="{% url 'reset-database' %}">
+                                {% csrf_token %}
+                                <div class="oh-input-group mb-3">
+                                    <label class="oh-label">{% trans "Authentication Password" %}</label>
+                                    <input type="password" name="reset_password" class="oh-input w-100" placeholder="{% trans 'Enter DB_INIT_PASSWORD' %}" required />
+                                </div>
+                                <div class="oh-modal__dialog-footer">
+                                    <button type="submit" class="oh-btn oh-btn--danger">
+                                        {% trans "Reset Database" %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
