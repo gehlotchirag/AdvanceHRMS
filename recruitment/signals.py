@@ -10,10 +10,12 @@ from recruitment.models import (
 
 
 @receiver(post_save, sender=Recruitment)
-def create_initial_stage(sender, instance, created, **kwargs):
+def create_initial_stage(sender, instance, created, raw=False, **kwargs):
     """
     This is post save method, used to create initial stage for the recruitment
     """
+    if raw:
+        return
     if created:
         applied_stage = Stage()
         applied_stage.sequence = 0
