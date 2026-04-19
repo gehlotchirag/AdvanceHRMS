@@ -267,7 +267,7 @@ def login_required(view_func):
         try:
             func = view_func(request, *args, **kwargs)
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
             if (
                 "notifications_notification" in str(e)
                 and request.headers.get("X-Requested-With") != "XMLHttpRequest"
