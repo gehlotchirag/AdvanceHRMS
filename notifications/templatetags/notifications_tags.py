@@ -3,7 +3,7 @@
 from django import get_version
 from django.template import Library
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe
 
 register = Library()
 
@@ -66,7 +66,7 @@ def register_notify_callbacks(
     for callback in callbacks.split(","):
         script += "register_notifier(" + callback + ");"
     script += "</script>"
-    return format_html(script)
+    return mark_safe(script)
 
 
 @register.simple_tag(takes_context=True)
