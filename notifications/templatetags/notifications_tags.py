@@ -75,16 +75,16 @@ def live_notify_badge(context, badge_class="live_notify_badge"):
     if not user:
         return ""
 
-    html = "<span class='{badge_class}'>{unread}</span>".format(
-        badge_class=badge_class, unread=user.notifications.unread().count()
+    return format_html(
+        "<span class='{}'>{}</span>",
+        badge_class,
+        user.notifications.unread().count(),
     )
-    return format_html(html)
 
 
 @register.simple_tag
 def live_notify_list(list_class="live_notify_list"):
-    html = "<ul class='{list_class}'></ul>".format(list_class=list_class)
-    return format_html(html)
+    return format_html("<ul class='{}'></ul>", list_class)
 
 
 def user_context(context):
