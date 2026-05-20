@@ -237,6 +237,8 @@ class JobPosition(HorillaModel):
         on_delete=models.PROTECT,
         related_name="job_position",
         verbose_name=_("Department"),
+        null=True,
+        blank=True,
     )
     company_id = models.ManyToManyField(Company, blank=True, verbose_name=_("Company"))
 
