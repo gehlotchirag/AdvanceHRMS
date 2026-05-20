@@ -16,6 +16,8 @@ from django.contrib import messages
 from django.core.cache import cache as CACHE
 from django.core.exceptions import FieldDoesNotExist
 from django.core.paginator import Page
+from django.db import IntegrityError
+from django.db import models as django_models
 from django.db import transaction
 from django.db.models import CharField, F
 from django.db.models.functions import Cast
@@ -44,6 +46,7 @@ from horilla_views.cbv_methods import (  # update_initial_cache,
     export_xlsx,
     generate_import_excel,
     get_short_uuid,
+    get_nested_field,
     get_verbose_name_from_field_path,
     hx_request_required,
     paginator_qry,
@@ -306,6 +309,39 @@ class HorillaListView(ListView):
 
             df = pd.read_excel(excel_file)
 
+            def coerce_import_value(model_field, value):
+                field = get_nested_field(self.model, model_field)
+                if value in (None, "") or field is None:
+                    return value
+                if isinstance(field, django_models.DateField):
+                    parsed_value = pd.to_datetime(value, errors="coerce")
+                    if pd.isna(parsed_value):
+                        return None
+                    return parsed_value.date()
+                if isinstance(field, django_models.IntegerField):
+                    numeric_value = pd.to_numeric(value, errors="coerce")
+                    if pd.isna(numeric_value):
+                        return None
+                    return int(numeric_value)
+                if isinstance(field, django_models.FloatField):
+                    numeric_value = pd.to_numeric(value, errors="coerce")
+                    if pd.isna(numeric_value):
+                        return None
+                    return float(numeric_value)
+                if isinstance(field, django_models.BooleanField):
+                    if isinstance(value, str):
+                        value = value.strip().lower()
+                    truthy_values = {True, 1, "1", "true", "yes", "y", "active"}
+                    falsy_values = {False, 0, "0", "false", "no", "n", "inactive"}
+                    if value in truthy_values:
+                        return True
+                    if value in falsy_values:
+                        return False
+                    if field.default is not django_models.NOT_PROVIDED:
+                        return field.default
+                    return False
+                return value
+
             serialized = []
             field_column_mapping_values = {}
             for _, row in df.iterrows():
@@ -326,6 +362,17 @@ class HorillaListView(ListView):
                             value = None
                         if isinstance(value, str):
                             value = value.strip()
+                        if (
+                            model_field == update_reference_key
+                            and self.update_reference in ("id", "pk")
+                            and value not in (None, "")
+                        ):
+                            try:
+                                value = int(value)
+                            except (TypeError, ValueError):
+                                value = None
+                        else:
+                            value = coerce_import_value(model_field, value)
                         parts = model_field.split("__")
                         current = record
                         for part in parts[:-1]:
@@ -341,11 +388,87 @@ class HorillaListView(ListView):
             error_records = []
             pk_values_mapping = {}
             fk_values_mapping = {}
+            imported_records_count = 0
+
+            def get_nested_value(record, lookup):
+                current = record
+                for part in lookup.split("__"):
+                    if not isinstance(current, dict):
+                        return None
+                    current = current.get(part)
+                return current
 
             for mapping, values in field_column_mapping_values.items():
                 related_model = self.import_related_model_column_mapping[mapping]
                 if mapping in self.primary_key_mapping:
                     field = self.primary_key_mapping[mapping]
+                    parent_mapping = mapping.rsplit("__", 1)[0] + "__job_position_id"
+                    if (
+                        related_model._meta.label_lower == "base.jobrole"
+                        and field == "job_role"
+                        and parent_mapping in self.primary_key_mapping
+                    ):
+                        position_field = self.primary_key_mapping[parent_mapping]
+                        role_position_pairs = {
+                            (
+                                get_nested_value(record, mapping),
+                                get_nested_value(record, parent_mapping),
+                            )
+                            for record in serialized
+                            if get_nested_value(record, mapping)
+                            and get_nested_value(record, parent_mapping)
+                        }
+                        position_model = related_model._meta.get_field(
+                            "job_position_id"
+                        ).related_model
+                        position_values = {
+                            position for _, position in role_position_pairs
+                        }
+                        positions = {
+                            str(getattr(position, position_field)): position
+                            for position in position_model.objects.filter(
+                                **{f"{position_field}__in": list(position_values)}
+                            )
+                        }
+                        existing_pairs = set(
+                            related_model.objects.filter(
+                                **{f"{field}__in": list(values)},
+                                job_position_id__in=list(positions.values()),
+                            ).values_list(field, "job_position_id")
+                        )
+                        to_create = [
+                            related_model(
+                                **{
+                                    field: role,
+                                    "job_position_id": positions[str(position)],
+                                }
+                            )
+                            for role, position in role_position_pairs
+                            if str(position) in positions
+                            and (role, positions[str(position)].pk)
+                            not in existing_pairs
+                        ]
+                        if to_create:
+                            pre_generic_import.send(
+                                sender=related_model,
+                                records=to_create,
+                                view=self,
+                            )
+                            related_model.objects.bulk_create(to_create)
+                            post_generic_import.send(
+                                sender=related_model,
+                                records=to_create,
+                                view=self,
+                            )
+                        pk_values_mapping[mapping] = pk_values_mapping.get(
+                            mapping, []
+                        ) + list(
+                            related_model.objects.filter(
+                                **{f"{field}__in": list(values)},
+                                job_position_id__in=list(positions.values()),
+                            ).select_related("job_position_id")
+                        )
+                        continue
                     if hasattr(related_model.objects, "entire"):
                         existing_objects = (
                             related_model.objects.entire()
@@ -361,11 +484,13 @@ class HorillaListView(ListView):
                         field_as_str=Cast(F(field), CharField())
                     ).values_list("field_as_str", flat=True)
 
-                    to_create = [
-                        related_model(**{field: value})
-                        for value in values
-                        if str(value) not in existing_values
-                    ]
+                    to_create = []
+                    if related_model != self.model:
+                        to_create = [
+                            related_model(**{field: value})
+                            for value in values
+                            if str(value) not in existing_values
+                        ]
 
                     if to_create:
                         pre_generic_import.send(
@@ -412,6 +537,52 @@ class HorillaListView(ListView):
             if without_ref:
                 with transaction.atomic():
                     records_to_import = []
+                    existing_unique_values = {}
+                    base_manager = self.model.objects
+                    if hasattr(base_manager, "entire"):
+                        base_manager = base_manager.entire()
+
+                    if self.model._meta.label_lower == "employee.employee":
+                        existing_unique_values = {
+                            "badge_id": set(
+                                base_manager.filter(
+                                    badge_id__in=[
+                                        record.get("badge_id")
+                                        for record in without_ref
+                                        if record.get("badge_id")
+                                    ]
+                                ).values_list("badge_id", flat=True)
+                            ),
+                            "email": set(
+                                base_manager.filter(
+                                    email__in=[
+                                        record.get("email")
+                                        for record in without_ref
+                                        if record.get("email")
+                                    ]
+                                ).values_list("email", flat=True)
+                            ),
+                        }
+                        user_model = self.import_related_model_column_mapping.get(
+                            "employee_user_id"
+                        )
+                        if user_model:
+                            existing_unique_values["employee_user_id__username"] = set(
+                                user_model.objects.filter(
+                                    username__in=[
+                                        get_nested_value(
+                                            record, "employee_user_id__username"
+                                        )
+                                        for record in without_ref
+                                        if get_nested_value(
+                                            record, "employee_user_id__username"
+                                        )
+                                    ]
+                                ).values_list("username", flat=True)
+                            )
+                    seen_unique_values = {
+                        field: set() for field in existing_unique_values
+                    }
                     for record in without_ref:
                         try:
                             for reverse_field in (
@@ -443,6 +614,32 @@ class HorillaListView(ListView):
                                             == record[reverse_field]
                                         }
                                     )
+                            duplicate_errors = []
+                            for field, existing_values in existing_unique_values.items():
+                                value = get_nested_value(record, field)
+                                if not value:
+                                    continue
+                                if value in existing_values:
+                                    duplicate_errors.append(
+                                        f"{field} '{value}' already exists"
+                                    )
+                                elif value in seen_unique_values[field]:
+                                    duplicate_errors.append(
+                                        f"{field} '{value}' is duplicated in the uploaded file"
+                                    )
+                                else:
+                                    seen_unique_values[field].add(value)
+                            if duplicate_errors:
+                                error_records.append(
+                                    {
+                                        "record": record.get(
+                                            "badge_id",
+                                            record.get("email", "Unknown"),
+                                        ),
+                                        "error": "; ".join(duplicate_errors),
+                                    }
+                                )
+                                continue
                             records_to_import.append(record)
 
                         except Exception as e:
@@ -507,6 +704,83 @@ class HorillaListView(ListView):
 
                         bulk_create_base_grouping.append(instance)
 
+                    if self.model._meta.label_lower == "employee.employee":
+                        existing_badges = set(
+                            base_manager.filter(
+                                badge_id__in=[
+                                    instance.badge_id
+                                    for instance in bulk_create_base_grouping
+                                    if getattr(instance, "badge_id", None)
+                                ]
+                            ).values_list("badge_id", flat=True)
+                        )
+                        existing_emails = set(
+                            base_manager.filter(
+                                email__in=[
+                                    instance.email
+                                    for instance in bulk_create_base_grouping
+                                    if getattr(instance, "email", None)
+                                ]
+                            ).values_list("email", flat=True)
+                        )
+                        seen_badges = set()
+                        seen_emails = set()
+                        valid_indices = []
+
+                        for index, instance in enumerate(bulk_create_base_grouping):
+                            errors = []
+                            badge_id = getattr(instance, "badge_id", None)
+                            email = getattr(instance, "email", None)
+                            if badge_id in existing_badges:
+                                errors.append(f"badge_id '{badge_id}' already exists")
+                            elif badge_id in seen_badges:
+                                errors.append(
+                                    f"badge_id '{badge_id}' is duplicated in the uploaded file"
+                                )
+                            elif badge_id:
+                                seen_badges.add(badge_id)
+
+                            if email in existing_emails:
+                                errors.append(f"email '{email}' already exists")
+                            elif email in seen_emails:
+                                errors.append(
+                                    f"email '{email}' is duplicated in the uploaded file"
+                                )
+                            elif email:
+                                seen_emails.add(email)
+
+                            if errors:
+                                error_records.append(
+                                    {
+                                        "record": badge_id or email or "Unknown",
+                                        "error": "; ".join(errors),
+                                    }
+                                )
+                            else:
+                                valid_indices.append(index)
+
+                        if len(valid_indices) != len(bulk_create_base_grouping):
+                            bulk_create_base_grouping = [
+                                bulk_create_base_grouping[index]
+                                for index in valid_indices
+                            ]
+                            bulk_base_fk_grouping = {
+                                relation: [
+                                    records[index]
+                                    for index in valid_indices
+                                    if index < len(records)
+                                ]
+                                for relation, records in bulk_base_fk_grouping.items()
+                            }
+                            bulk_create_reverse_related_grouping = {
+                                relation: [
+                                    records[index]
+                                    for index in valid_indices
+                                    if index < len(records)
+                                ]
+                                for relation, records in bulk_create_reverse_related_grouping.items()
+                            }
+
                     for fk_field in self.fk_o2o_field_in_base_model:
                         if fk_field not in self.fk_mapping:
                             for relation, items in bulk_base_fk_grouping.items():
@@ -545,7 +819,91 @@ class HorillaListView(ListView):
                         view=self,
                     )
 
-                    self.model.objects.bulk_create(bulk_create_base_grouping)
+                    if self.model._meta.label_lower == "employee.employee":
+                        existing_badges = set(
+                            base_manager.filter(
+                                badge_id__in=[
+                                    instance.badge_id
+                                    for instance in bulk_create_base_grouping
+                                    if getattr(instance, "badge_id", None)
+                                ]
+                            ).values_list("badge_id", flat=True)
+                        )
+                        existing_emails = set(
+                            base_manager.filter(
+                                email__in=[
+                                    instance.email
+                                    for instance in bulk_create_base_grouping
+                                    if getattr(instance, "email", None)
+                                ]
+                            ).values_list("email", flat=True)
+                        )
+                        valid_indices = []
+                        for index, instance in enumerate(bulk_create_base_grouping):
+                            badge_id = getattr(instance, "badge_id", None)
+                            email = getattr(instance, "email", None)
+                            errors = []
+                            if badge_id in existing_badges:
+                                errors.append(f"badge_id '{badge_id}' already exists")
+                            if email in existing_emails:
+                                errors.append(f"email '{email}' already exists")
+                            if errors:
+                                error_records.append(
+                                    {
+                                        "record": badge_id or email or "Unknown",
+                                        "error": "; ".join(errors),
+                                    }
+                                )
+                            else:
+                                valid_indices.append(index)
+
+                        if len(valid_indices) != len(bulk_create_base_grouping):
+                            bulk_create_base_grouping = [
+                                bulk_create_base_grouping[index]
+                                for index in valid_indices
+                            ]
+                            bulk_create_reverse_related_grouping = {
+                                relation: [
+                                    records[index]
+                                    for index in valid_indices
+                                    if index < len(records)
+                                ]
+                                for relation, records in bulk_create_reverse_related_grouping.items()
+                            }
+
+                    try:
+                        self.model.objects.bulk_create(bulk_create_base_grouping)
+                    except IntegrityError:
+                        valid_indices = []
+                        for index, instance in enumerate(bulk_create_base_grouping):
+                            try:
+                                with transaction.atomic():
+                                    instance.save()
+                                valid_indices.append(index)
+                            except IntegrityError as exc:
+                                error_records.append(
+                                    {
+                                        "record": getattr(
+                                            instance,
+                                            "badge_id",
+                                            getattr(instance, "email", "Unknown"),
+                                        )
+                                        or "Unknown",
+                                        "error": str(exc),
+                                    }
+                                )
+                        bulk_create_base_grouping = [
+                            bulk_create_base_grouping[index] for index in valid_indices
+                        ]
+                        bulk_create_reverse_related_grouping = {
+                            relation: [
+                                records[index]
+                                for index in valid_indices
+                                if index < len(records)
+                            ]
+                            for relation, records in bulk_create_reverse_related_grouping.items()
+                        }
+                    imported_records_count = len(bulk_create_base_grouping)
 
                     post_generic_import.send(
                         sender=self.model,
@@ -907,7 +1265,7 @@ class HorillaListView(ListView):
                 context={
                     "view_id": self.view_id,
                     "status": status,
-                    "imported": len(without_ref),
+                    "imported": imported_records_count,
                     "updated": len(with_ref),
                     "errors": error_records[:10],  # Optional: truncate if too large
                     "total_errors": error_records,  # Optional: truncate if too large

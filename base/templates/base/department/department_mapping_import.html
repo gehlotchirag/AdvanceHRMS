@@ -1,0 +1,49 @@
+{% load i18n %}
+<div class="oh-modal" id="departmentMappingImport" role="dialog" aria-labelledby="departmentMappingImportLabel" aria-hidden="true">
+    <div class="oh-modal__dialog">
+        <div class="oh-modal__dialog-header">
+            <h2 class="oh-modal__dialog-title" id="departmentMappingImportLabel">
+                {% trans "Bulk Import Departments" %}
+            </h2>
+            <button class="oh-modal__close" aria-label="Close">
+                <ion-icon name="close-outline"></ion-icon>
+            </button>
+        </div>
+        <div class="oh-modal__dialog-body" id="departmentMappingImportBody">
+            <form
+                hx-post="{% url 'department-job-mapping-import' %}"
+                hx-encoding="multipart/form-data"
+                hx-target="#departmentMappingImportBody"
+                hx-swap="innerHTML"
+            >
+                {% csrf_token %}
+                <div class="oh-input-group mb-3">
+                    <label class="oh-label" for="departmentMappingImportFile">
+                        {% trans "Excel File" %}
+                    </label>
+                    <input
+                        required
+                        type="file"
+                        name="file"
+                        id="departmentMappingImportFile"
+                        class="oh-input w-100"
+                        accept=".xlsx,.xls"
+                    />
+                </div>
+                <p class="oh-text--small mb-3">
+                    {% trans "Required column: Department. Optional columns: Company, Job Position, Job Role." %}
+                </p>
+                <div class="oh-modal__dialog-footer p-0">
+                    <button type="submit" class="oh-btn oh-btn--secondary oh-btn--shadow">
+                        <ion-icon name="cloud-upload-outline" class="me-1"></ion-icon>
+                        {% trans "Import" %}
+                    </button>
+                    <a href="{% url 'department-job-mapping-template' %}" class="oh-btn oh-btn--light-bkg">
+                        <ion-icon name="cloud-download-outline" class="me-1"></ion-icon>
+                        {% trans "Template" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

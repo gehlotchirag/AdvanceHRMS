@@ -20,108 +20,32 @@
 </style>
 
 <div class="grid grid-cols-1 xl:grid-cols-4 md:grid-cols-2 gap-4 mb-4">
-	{% if perms.employee.view_employee %}
-		{% if "recruitment"|app_installed %}
-			<div class="bg-white p-6 rounded-md shadow-card group relative">
-				<div class="flex items-center gap-4">
-					<div class="bg-[#1cba5121] p-3 rounded-md">
-						<img
-							src="/static/horilla_theme/assets/img/icons/add-user.svg"
-							width="20"
-						/>
-					</div>
-					<a
-						href="{% url 'candidate-view' %}?joining_date={{current_date}}"
-						style="text-decoration: none"
-					>
-						<div>
-							<p class="text-sm">{% trans "Todays's New Joiners" %}</p>
-							<div class="flex items-center gap-2">
-								<p
-									class="text-xl font-bold text-secondary-900"
-									hx-get="{% url 'joining-today-count' %}"
-									hx-trigger="load"
-								>0</p>
-							</div>
-						</div>
-					</a>
-				</div>
-			</div>
-		{% endif %}
-		{% if "leave"|app_installed %}
-			<div class="bg-white p-6 rounded-md shadow-card group relative">
-				<div class="flex items-center gap-4">
-					<div class="bg-[#b71db01f] p-3 rounded-md">
-						<img
-							src="/static/horilla_theme/assets/img/icons/absent.svg"
-							width="20"
-						/>
-					</div>
-					<a
-						href="{% url 'request-view' %}?from_date={{current_date}}&to_date={{current_date}}"
-						style="text-decoration: none"
-					>
-						<div>
-							<p class="text-sm">{% trans "Leave on today" %}</p>
-							<div class="flex items-center gap-2">
-								<p class="text-xl font-bold text-secondary-900"
-									hx-get="{% url 'leave-today-count' %}"
-									hx-trigger="load"
-								>0</p>
-							</div>
-						</div>
-					</a>
-				</div>
-			</div>
-		{% endif %}
-		{% if "recruitment"|app_installed %}
-			<div class="bg-white p-6 rounded-md shadow-card group relative">
-				<div class="flex items-center gap-4">
-					<div class="bg-[#ea7f2f2e] p-3 rounded-md">
-						<img
-							src="/static/horilla_theme/assets/img/icons/joining.svg"
-							width="20"
-						/>
-					</div>
-					<a
-						href="{% url 'candidate-view' %}?scheduled_from={{first_day_of_week}}&scheduled_till={{last_day_of_week}}"
-						style="text-decoration: none"
-					>
-						<div>
-							<p class="text-sm">{% trans "Joining this week" %}</p>
-							<div class="flex items-center gap-2">
-								<p
-									class="text-xl font-bold text-secondary-900"
-									hx-get="{% url 'joining-week-count' %}"
-									hx-trigger="load"
-								>0</p>
-							</div>
-						</div>
-					</a>
-				</div>
-			</div>
-		{% endif %}
+	{% for card in dashboard_stat_cards %}
 		<div class="bg-white p-6 rounded-md shadow-card group relative">
 			<div class="flex items-center gap-4">
-				<div class="bg-[#d821491c] p-3 rounded-md">
+				<div class="p-3 rounded-md" style="background-color: {{ card.icon_bg }};">
 					<img
-						src="/static/horilla_theme/assets/img/icons/strenth.svg"
+						src="{% static card.icon %}"
 						width="20"
+						alt=""
 					/>
 				</div>
-				<a href="{% url 'employee-view' %}" style="text-decoration: none">
+				<a href="{{ card.url }}" style="text-decoration: none">
 					<div>
-						<p class="text-sm">{% trans "Total Strength" %}</p>
+						<p class="text-sm">{{ card.title }}</p>
 						<div class="flex items-center gap-2">
-							<p class="text-xl font-bold text-secondary-900">
-								{{total_employees|default:0}}
-							</p>
+							<p
+								class="text-xl font-bold text-secondary-900"
+								hx-get="{{ card.count_url }}"
+								hx-trigger="{{ card.refresh }}"
+								aria-live="polite"
+							>0</p>
 						</div>
 					</div>
 				</a>
 			</div>
 		</div>
-	{% endif %}
+	{% endfor %}
 </div>
 
 <div class="flex flex-col md:flex-row-reverse gap-4">
@@ -152,7 +76,8 @@
 			<div
 				class="flex gap-3 items-center text-sm font-medium py-1"
 				hx-get="{% url 'announcement-list' %}"
-				hx-trigger="load"
+				hx-trigger="load, every 60s"
+				aria-live="polite"
 			></div>
 		</div>
 
@@ -167,7 +92,8 @@
 					<div
 						class="flex-col items-center justify-center"
 						hx-get="{% url 'employee-leave' %}"
-						hx-trigger="load"
+						hx-trigger="load, every 60s"
+						aria-live="polite"
 					></div>
 				</div>
 			{% endif %}

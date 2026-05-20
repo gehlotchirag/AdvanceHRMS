@@ -2940,7 +2940,10 @@ def dashboard(request):
 
 @login_required
 def total_employees_count(request):
-    employees = Employee.objects.all().count()
+    employees = Employee.objects
+    if hasattr(employees, "entire"):
+        employees = employees.entire()
+    employees = employees.filter(is_active=True).count()
     return HttpResponse(employees)
 
 

@@ -931,12 +931,25 @@ def assign_related(
             for field, value in record[reverse_field].items():
                 full_field = reverse_field + "__" + field
                 if full_field in pk_values_mapping:
+                    instances = [
+                        data
+                        for data in pk_values_mapping[full_field]
+                        if getattr(data, pk_field_mapping[full_field], None) == value
+                    ]
+                    if (
+                        full_field.endswith("__job_role_id")
+                        and reverse_obj_dict.get("job_position_id")
+                    ):
+                        instances = [
+                            data
+                            for data in instances
+                            if getattr(data, "job_position_id", None)
+                            == reverse_obj_dict["job_position_id"]
+                        ]
                     reverse_obj_dict.update(
                         {
                             field: data
-                            for data in pk_values_mapping[full_field]
-                            if getattr(data, pk_field_mapping[full_field], None)
-                            == value
+                            for data in instances[:1]
                         }
                     )
                 else:

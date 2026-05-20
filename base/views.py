@@ -28,6 +28,7 @@ from django.core.files.base import ContentFile
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.core.management import call_command
 from django.core.validators import validate_ipv46_address
+from django.db import transaction
 from django.db.models import ProtectedError, Q
 from django.http import (
     FileResponse,
@@ -918,6 +919,52 @@ def home(request):
     employee_charts = DashboardEmployeeCharts.objects.get_or_create(
         employee=request.user.employee_get
     )[0]
+    dashboard_stat_cards = []
+
+    if request.user.has_perm("employee.view_employee"):
+        if apps.is_installed("recruitment"):
+            dashboard_stat_cards.append(
+                {
+                    "title": _("Today's New Joiners"),
+                    "icon": "horilla_theme/assets/img/icons/add-user.svg",
+                    "icon_bg": "#1cba5121",
+                    "url": f"{reverse('candidate-view')}?joining_date={today.strftime('%Y-%m-%d')}",
+                    "count_url": reverse("joining-today-count"),
+                    "refresh": "load, every 30s",
+                }
+            )
+        if apps.is_installed("leave"):
+            dashboard_stat_cards.append(
+                {
+                    "title": _("Leave on today"),
+                    "icon": "horilla_theme/assets/img/icons/absent.svg",
+                    "icon_bg": "#b71db01f",
+                    "url": f"{reverse('request-view')}?from_date={today.strftime('%Y-%m-%d')}&to_date={today.strftime('%Y-%m-%d')}",
+                    "count_url": reverse("leave-today-count"),
+                    "refresh": "load, every 30s",
+                }
+            )
+        if apps.is_installed("recruitment"):
+            dashboard_stat_cards.append(
+                {
+                    "title": _("Joining this week"),
+                    "icon": "horilla_theme/assets/img/icons/joining.svg",
+                    "icon_bg": "#ea7f2f2e",
+                    "url": f"{reverse('candidate-view')}?scheduled_from={first_day_of_week.strftime('%Y-%m-%d')}&scheduled_till={last_day_of_week.strftime('%Y-%m-%d')}",
+                    "count_url": reverse("joining-week-count"),
+                    "refresh": "load, every 30s",
+                }
+            )
+        dashboard_stat_cards.append(
+            {
+                "title": _("Total Strength"),
+                "icon": "horilla_theme/assets/img/icons/strenth.svg",
+                "icon_bg": "#d821491c",
+                "url": reverse("employee-view"),
+                "count_url": reverse("total-employees-count"),
+                "refresh": "load, every 30s",
+            }
+        )
 
     user = request.user
     today = timezone.now().date()  # Get today's date
@@ -952,6 +999,7 @@ def home(request):
     context = {
         "first_day_of_week": first_day_of_week.strftime("%Y-%m-%d"),
         "last_day_of_week": last_day_of_week.strftime("%Y-%m-%d"),
+        "dashboard_stat_cards": dashboard_stat_cards,
         "charts": employee_charts.charts,
         "is_birthday": is_birthday,
         "show_section": show_section,
@@ -1852,6 +1900,246 @@ def department_view(request):
         "base/department/department.html",
         {
             "departments": departments,
+        },
+    )
+
+
+@login_required
+@permission_required("base.add_department")
+def department_job_mapping_template(request):
+    """
+    Download the XLSX template for department, job position, and job role import.
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Department Mapping"
+    headers = ["Company", "Department", "Job Position", "Job Role"]
+    ws.append(headers)
+    ws.append(["AdvanceHR", "Human Resources", "HR Manager", "HR Business Partner"])
+    ws.append(["AdvanceHR", "Human Resources", "Recruiter", "Talent Acquisition"])
+    ws.append(["AdvanceHR", "Engineering", "Software Engineer", "Backend Developer"])
+    ws.append(["AdvanceHR", "Engineering", "Software Engineer", "Frontend Developer"])
+
+    fill = PatternFill(fill_type="solid", fgColor="FDE9E5")
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        cell.fill = fill
+    for index, _ in enumerate(headers, start=1):
+        ws.column_dimensions[get_column_letter(index)].width = 24
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = (
+        'attachment; filename="Department_Job_Mapping_Import_Template.xlsx"'
+    )
+    wb.save(response)
+    return response
+
+
+def _mapping_import_value(row, aliases):
+    """
+    Return a cleaned value from a pandas row using the first matching alias.
+    """
+    for alias in aliases:
+        if alias in row and not pd.isna(row[alias]):
+            return str(row[alias]).strip()
+    return ""
+
+
+@login_required
+@permission_required("base.add_department")
+def department_job_mapping_import(request):
+    """
+    Import departments, job positions, job roles, and their mappings from XLSX.
+    """
+    if request.method != "POST":
+        return render(request, "base/department/department_mapping_import.html")
+
+    upload = request.FILES.get("file")
+    if not upload:
+        return render(
+            request,
+            "base/department/department_mapping_import_response.html",
+            {"status": _("Error Found"), "errors": [_("No file uploaded.")]},
+        )
+
+    extension = os.path.splitext(upload.name)[1].lower()
+    if extension not in [".xlsx", ".xls"]:
+        return render(
+            request,
+            "base/department/department_mapping_import_response.html",
+            {
+                "status": _("Error Found"),
+                "errors": [_("Please upload an Excel file with .xlsx or .xls format.")],
+            },
+        )
+
+    try:
+        data_frame = pd.read_excel(upload)
+    except Exception as error:
+        return render(
+            request,
+            "base/department/department_mapping_import_response.html",
+            {
+                "status": _("Error Found"),
+                "errors": [_("Unable to read Excel file: {}").format(error)],
+            },
+        )
+
+    data_frame.columns = [str(column).strip() for column in data_frame.columns]
+    required_columns = {"Department"}
+    if not required_columns.issubset(set(data_frame.columns)):
+        return render(
+            request,
+            "base/department/department_mapping_import_response.html",
+            {
+                "status": _("Error Found"),
+                "errors": [
+                    _(
+                        "Missing required column: Department. Optional columns: Company, Job Position, Job Role."
+                    )
+                ],
+            },
+        )
+
+    default_company = Company.objects.first()
+    imported = {"departments": 0, "positions": 0, "roles": 0}
+    skipped = []
+    errors = []
+
+    def get_companies(company_value):
+        names = [
+            name.strip()
+            for name in company_value.replace(";", ",").split(",")
+            if name.strip()
+        ]
+        companies = []
+        missing = []
+        for name in names:
+            company = Company.objects.filter(company__iexact=name).first()
+            if company:
+                companies.append(company)
+            else:
+                missing.append(name)
+        if missing:
+            skipped.append(
+                _(
+                    "Company not found and skipped for mapping: {}"
+                ).format(", ".join(missing))
+            )
+        if not companies and default_company:
+            companies = [default_company]
+        return companies
+
+    with transaction.atomic():
+        for index, row in data_frame.iterrows():
+            row_number = index + 2
+            company_value = _mapping_import_value(row, ["Company", "Company Name"])
+            department_name = _mapping_import_value(row, ["Department", "Department Name"])
+            position_name = _mapping_import_value(
+                row, ["Job Position", "Position", "JobPosition"]
+            )
+            role_name = _mapping_import_value(row, ["Job Role", "Role", "JobRole"])
+
+            if not department_name:
+                errors.append(_("Row {}: Department is required.").format(row_number))
+                continue
+            if role_name and not position_name:
+                errors.append(
+                    _("Row {}: Job Position is required when Job Role is provided.").format(
+                        row_number
+                    )
+                )
+                continue
+
+            companies = get_companies(company_value)
+
+            department = None
+            if companies:
+                department = (
+                    Department.objects.filter(
+                        department__iexact=department_name,
+                        company_id__in=companies,
+                    )
+                    .distinct()
+                    .first()
+                )
+            if department is None:
+                department = Department.objects.filter(
+                    department__iexact=department_name
+                ).first()
+            if department is None:
+                department = Department.objects.create(department=department_name)
+                imported["departments"] += 1
+            else:
+                skipped.append(
+                    _("Row {}: Department '{}' already exists.").format(
+                        row_number, department_name
+                    )
+                )
+            if companies:
+                department.company_id.add(*companies)
+
+            if not position_name:
+                continue
+
+            job_position = JobPosition.objects.filter(
+                department_id=department,
+                job_position__iexact=position_name,
+            ).first()
+            if job_position is None:
+                job_position = JobPosition.objects.create(
+                    department_id=department,
+                    job_position=position_name,
+                )
+                imported["positions"] += 1
+            else:
+                skipped.append(
+                    _("Row {}: Job Position '{}' already exists under '{}'.").format(
+                        row_number, position_name, department.department
+                    )
+                )
+            if companies:
+                job_position.company_id.add(*companies)
+
+            if not role_name:
+                continue
+
+            job_role = JobRole.objects.filter(
+                job_position_id=job_position,
+                job_role__iexact=role_name,
+            ).first()
+            if job_role is None:
+                job_role = JobRole.objects.create(
+                    job_position_id=job_position,
+                    job_role=role_name,
+                )
+                imported["roles"] += 1
+            else:
+                skipped.append(
+                    _("Row {}: Job Role '{}' already exists under '{}'.").format(
+                        row_number, role_name, job_position.job_position
+                    )
+                )
+            if companies:
+                job_role.company_id.add(*companies)
+
+    status = _("Success") if not errors else _("Error Found")
+    return render(
+        request,
+        "base/department/department_mapping_import_response.html",
+        {
+            "status": status,
+            "imported": imported,
+            "skipped": skipped[:20],
+            "skipped_count": len(skipped),
+            "errors": errors[:20],
+            "error_count": len(errors),
         },
     )
 

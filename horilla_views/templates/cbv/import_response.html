@@ -28,6 +28,26 @@
     <td>{{ updated }}</td>
   </tr>
 </table>
+{% if total_errors %}
+  <h6 class="mt-2">{% trans "Skipped Records" %}</h6>
+  <table class="table import">
+    <tr>
+      <th>{% trans "Record" %}</th>
+      <th>{% trans "Reason" %}</th>
+    </tr>
+    {% for error in errors %}
+      <tr>
+        <td>{{ error.record }}</td>
+        <td>{{ error.error }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  {% if more_error %}
+    <p class="mt-2">
+      {% blocktrans with count=total_errors|length %}Showing first 10 of {{ count }} skipped records.{% endblocktrans %}
+    </p>
+  {% endif %}
+{% endif %}
 {% if traceback_message %}
    <h6 class="mt-2">{{error_message}}</h6>
 

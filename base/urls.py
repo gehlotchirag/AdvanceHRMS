@@ -368,6 +368,16 @@ urlpatterns = [
     ),
     path("settings/department-view/", views.department_view, name="department-view"),
     path(
+        "settings/department-job-mapping-template/",
+        views.department_job_mapping_template,
+        name="department-job-mapping-template",
+    ),
+    path(
+        "settings/department-job-mapping-import/",
+        views.department_job_mapping_import,
+        name="department-job-mapping-import",
+    ),
+    path(
         "department-list/",
         department.DepartmentListView.as_view(),
         name="department-list",
