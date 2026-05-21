@@ -2,7 +2,6 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-buildCommand = null
 
 [deploy]
 preDeployCommand = "python manage.py migrate --noinput"
