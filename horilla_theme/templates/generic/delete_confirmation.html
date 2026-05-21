@@ -7,6 +7,15 @@
 	}
 </style>
 
+<button
+	hidden
+	class="reload-record"
+	hx-get="{% url 'generic-delete' %}?{{ request.GET.urlencode }}"
+	hx-target="#{{ confirmation_target }}"
+>
+	{{ request.GET.urlencode }}
+</button>
+
 <div class="oh-modal__dialog-header">
 	<span class="text-md font-semibold" id="deleteConfirmationLabel"
 		>{% trans "Delete Confirmation" %}</span
