@@ -222,10 +222,21 @@ CHARTS = [
 ]
 
 
-def custom404(request):
+def custom404(request, exception=None):
     """
     Custom 404 method
     """
+    if request.headers.get("HX-Request"):
+        return HttpResponse(
+            """
+            <script>
+                $('.oh-modal--show').removeClass('oh-modal--show');
+                $('#genericModalBody, #deleteConfirmationBody').empty();
+                $('#reloadMessagesButton').click();
+            </script>
+            """,
+            status=200,
+        )
     return render(request, "404.html")
 
 
