@@ -90,8 +90,9 @@
       </button>
       <div class="oh-modal__dialog-body p-0 pt-2" id="workInfoImportModalBody">
         <form
-          action="#"
-          id="workInfoImportForm"
+          hx-post="{% url 'work-info-import' %}"
+          hx-target="#objectCreateModalTarget"
+          hx-encoding="multipart/form-data"
           enctype="multipart/form-data">
           <div
             class="oh-modal__dialog-body mr-5"

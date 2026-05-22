@@ -19,9 +19,9 @@ function getCookie(name) {
 
 var form = document.getElementById("workInfoImportForm");
 
-// Add an event listener to the legacy import form when it is present.
+// Add an event listener to the form submission
 if (form) {
-form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", function (event) {
     // Prevent the default form submission
     event.preventDefault();
 
@@ -43,9 +43,107 @@ form.addEventListener("submit", function (event) {
             "X-CSRFToken": getCookie("csrftoken"),
             "HX-Request": "true",
         },
-        success: function (response) {
-            $("#workInfoImportModalBody").html(response);
-            $("#objectCreateModalTarget").html(response);
+        xhrFields: {
+            responseType: "blob",
+        },
+        success: function (response, textStatus, xhr) {
+            var errorCount = xhr.getResponseHeader('X-Error-Count');
+            if (typeof response === 'object' && response.type == 'application/json') {
+                var reader = new FileReader();
+
+                reader.onload = function () {
+                    var json = JSON.parse(reader.result);
+
+                    if (json.success_count > 0) {
+                        Swal.fire({
+                            text: `${json.success_count} Employees Imported Successfully`,
+                            icon: "success",
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                        }).then(function () {
+                            window.location.reload();
+                        });
+                    }
+                }
+                reader.readAsText(response);
+                return;
+            }
+            if (!$(".file-xlsx-validation").length) {
+                swal.fire({
+                    text: `You have ${errorCount} errors. Do you want to download the error list?`,
+                    icon: "error",
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: "Download error list & Skip Import",
+                    denyButtonText: "Downlod error list & Continue Import",
+                    cancelButtonText: i18nMessages.cancel,
+                    confirmButtonColor: "#d33",
+                    denyButtonColor: "#008000",
+                    customClass: {
+                        container: 'custom-swal-container'
+                    }
+                })
+                    .then((result) => {
+                        if (result.isConfirmed) {
+                            const file = new Blob([response], {
+                                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            });
+                            const url = URL.createObjectURL(file);
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = "ImportError.xlsx";
+                            document.body.appendChild(link);
+                            link.click();
+                            window.location.reload();
+                        }
+                        else if (result.isDenied) {
+                            formData.append("create_work_info", true);
+                            $.ajax({
+                                type: "POST",
+                                url: "/employee/work-info-import",
+                                dataType: "binary",
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                headers: {
+                                    "X-CSRFToken": getCookie("csrftoken"),
+                                    "HX-Request": "true",
+                                },
+                                xhrFields: {
+                                    responseType: "blob",
+                                },
+                                success: function (response, textStatus, xhr) {
+                                    Swal.fire({
+                                        text: `Employees Imported Successfully`,
+                                        icon: "success",
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        timerProgressBar: true,
+                                    }).then(function () {
+                                        const file = new Blob([response], {
+                                            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        });
+                                        const url = URL.createObjectURL(file);
+                                        const link = document.createElement("a");
+                                        link.href = url;
+                                        link.download = "ImportError.xlsx";
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        window.location.reload();
+                                    });
+
+                                    return;
+                                }
+                            })
+                        }
+                        else {
+                            $(".oh-dropdown__import-form").css("display", "block");
+                            $("#uploading").css("display", "none");
+                        }
+                    });
+            }
+
         },
         error: function (xhr, textStatus, errorThrown) {
             console.error("Error downloading file:", errorThrown);
@@ -53,7 +151,7 @@ form.addEventListener("submit", function (event) {
             $("#uploading").css("display", "none");
         },
     });
-});
+    });
 }
 
 
