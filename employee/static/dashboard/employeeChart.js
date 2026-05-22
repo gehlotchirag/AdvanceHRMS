@@ -124,6 +124,7 @@ $(document).ready(function () {
             const visibility = Array(labels.length).fill(true);
 
             // Create chart instance
+            Chart.getChart(ctx.canvas)?.destroy();
             const employeeChartInstance = new Chart(ctx, {
                 type: "doughnut",
                 data: {
@@ -251,6 +252,7 @@ $(document).ready(function () {
                 borderWidth: 0,
             }));
 
+            Chart.getChart(ctx.canvas)?.destroy();
             window["genderChart"] = new Chart(ctx, {
                 type: "doughnut",
                 data: {
@@ -342,6 +344,7 @@ $(document).ready(function () {
             const visibility = Array(labels.length).fill(true);
 
             // Create the chart instance
+            Chart.getChart(ctx.canvas)?.destroy();
             const departmentChartInstance = new Chart(ctx, {
                 type: "doughnut",
                 data: {
@@ -453,42 +456,44 @@ $(document).ready(function () {
         });
     }
 
-    $.ajax({
-        url: "/employee/dashboard-employee",
-        type: "GET",
-        success: function (response) {
-          // Code to handle the response
-          dataSet = response.dataSet;
-          labels = response.labels;
+    function reloadEmployeeDashboardCharts() {
+        $.ajax({
+            url: "/employee/dashboard-employee",
+            type: "GET",
+            success: function (response) {
+              dataSet = response.dataSet;
+              labels = response.labels;
+              employeeChart(dataSet, labels);
+            },
+        });
 
-          employeeChart(dataSet, labels);
-        },
-    });
+        $.ajax({
+            url: "/employee/dashboard-employee-gender",
+            type: "GET",
+            success: function (response) {
+                dataSet = response.dataSet;
+                labels = response.labels;
+                genderChart(dataSet, labels);
+            },
+        });
 
-    $.ajax({
-        url: "/employee/dashboard-employee-gender",
-        type: "GET",
-        success: function (response) {
-            // Code to handle the response
-            dataSet = response.dataSet;
-            labels = response.labels;
-            genderChart(dataSet, labels);
-        },
-    });
+        $.ajax({
+            url: "/employee/dashboard-employee-department",
+            type: "GET",
+            success: function (response) {
+                dataSet = response.dataSet;
+                labels = response.labels;
+                departmentChart(dataSet, labels);
+            },
+            error: function (error) {
+                console.log(error);
+            },
+        });
+    }
 
-    $.ajax({
-        url: "/employee/dashboard-employee-department",
-        type: "GET",
-        success: function (response) {
-            // Code to handle the response
-            dataSet = response.dataSet;
-            labels = response.labels;
-            departmentChart(dataSet, labels);
-        },
-        error: function (error) {
-            console.log(error);
-        },
-    });
+    window.reloadEmployeeDashboardCharts = reloadEmployeeDashboardCharts;
+    reloadEmployeeDashboardCharts();
+    setInterval(reloadEmployeeDashboardCharts, 60000);
 
     $(".oh-card-dashboard__title").click(function (e) {
         var chartType = myChart.config.type;

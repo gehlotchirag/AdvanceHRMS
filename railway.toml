@@ -1,7 +1,7 @@
 # https://docs.railway.app/reference/config-as-code
 [build]
-builder = "nixpacks"
-buildCommand = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 preDeployCommand = "python manage.py migrate --noinput"

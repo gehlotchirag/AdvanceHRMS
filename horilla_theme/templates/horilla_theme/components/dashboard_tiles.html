@@ -71,7 +71,7 @@
                 class="w-full overflow-x-auto overflow-y-auto"
                 id="shiftRequestApprove"
                 hx-get="{% url 'dashboard-shift-request' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -96,7 +96,7 @@
                 class="w-full overflow-x-auto overflow-y-auto"
                 id="shiftRequestApprove"
                 hx-get="{% url 'dashboard-work-type-request' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -139,7 +139,7 @@
             <div
                 class="overflow-hidden overflow-x-auto"
                 hx-get="{% url 'emp-workinfo-complete' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -244,7 +244,7 @@
             <div
                 class="overflow-hidden overflow-x-auto"
                 hx-get="{% url 'dashboard-attendance-validate' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -323,7 +323,7 @@
             <div
                 class="flex-col items-center justify-center"
                 hx-get='{% url "dashboard-asset-request-approve" %}'
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             >
             </div>
         </div>
@@ -349,7 +349,7 @@
             <div
                 class="flex-col items-center justify-center h-[400px]"
                 hx-get="{% url 'not-out-yet' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -374,7 +374,7 @@
             <div
                 class="flex-col items-center justify-center"
                 hx-get="{% url 'not-in-yet' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -399,7 +399,7 @@
             <div
                 class="flex-col items-center justify-center"
                 hx-get="{% url 'dashboard-overtime-approve' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -533,7 +533,7 @@
             <div
                 class="flex-col items-center justify-center"
                 hx-get="{% url 'leave-request-and-approve' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -558,7 +558,7 @@
             <div
                 class="flex-col items-center justify-center"
                 hx-get="{% url 'leave-allocation-approve' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 
@@ -583,7 +583,7 @@
             <div
                 class="flex-col items-center justify-center"
                 hx-get="{% url 'dashboard-feedback-answer' %}"
-                hx-trigger="load"
+                hx-trigger="load, every 60s"
             ></div>
         </div>
 

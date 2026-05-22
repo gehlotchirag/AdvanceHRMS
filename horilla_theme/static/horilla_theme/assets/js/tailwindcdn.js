@@ -5,6 +5,5 @@
 (function () {
   var s = document.createElement("script");
   s.src = "https://cdn.tailwindcss.com";
-  s.crossOrigin = "anonymous";
   document.head.appendChild(s);
 })();

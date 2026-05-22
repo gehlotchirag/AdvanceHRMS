@@ -1,5 +1,31 @@
 {% extends 'settings.html' %} {% load i18n %} {% block settings %}{% load static %}
 {% include "generic/components.html" %}
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		if (!document.getElementById("deleteConfirmationBody")) {
+			const deleteModal = document.createElement("div");
+			deleteModal.className = "oh-modal";
+			deleteModal.id = "deleteConfirmation";
+			deleteModal.setAttribute("role", "dialog");
+			deleteModal.setAttribute("aria-labelledby", "deleteConfirmation");
+			deleteModal.setAttribute("aria-hidden", "true");
+			deleteModal.style.zIndex = "1022";
+			deleteModal.innerHTML = '<div class="oh-modal__dialog oh-modal__dialog--custom max-w-[900px]" id="deleteConfirmationBody"></div>';
+			document.body.appendChild(deleteModal);
+		}
+
+		if (!document.getElementById("genericModalBody")) {
+			const genericModal = document.createElement("div");
+			genericModal.className = "oh-modal";
+			genericModal.id = "genericModal";
+			genericModal.setAttribute("role", "dialog");
+			genericModal.setAttribute("aria-labelledby", "genericModal");
+			genericModal.setAttribute("aria-hidden", "true");
+			genericModal.innerHTML = '<div class="oh-modal__dialog" id="genericModalBody"></div>';
+			document.body.appendChild(genericModal);
+		}
+	});
+</script>
 <meta name="csrf-token" content="{{ csrf_token }}">
 <div id="selectedInstance" data-ids="[]"></div>
 <div class="oh-inner-sidebar-content">

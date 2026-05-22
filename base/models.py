@@ -237,6 +237,8 @@ class JobPosition(HorillaModel):
         on_delete=models.PROTECT,
         related_name="job_position",
         verbose_name=_("Department"),
+        null=True,
+        blank=True,
     )
     company_id = models.ManyToManyField(Company, blank=True, verbose_name=_("Company"))
 
@@ -251,7 +253,9 @@ class JobPosition(HorillaModel):
         verbose_name_plural = _("Job Positions")
 
     def __str__(self):
-        return str(self.job_position + " - (" + self.department_id.department) + ")"
+        if self.department_id:
+            return f"{self.job_position} - ({self.department_id.department})"
+        return str(self.job_position)
 
     def job_position_col(self):
         """

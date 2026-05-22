@@ -321,6 +321,25 @@ class HorillaDeleteConfirmationView(View):
 
     confirmation_target = "deleteConfirmationBody"
 
+    def deleted_response(self, model):
+        """
+        Return a quiet response when a stale delete modal asks for an object that
+        has already been removed.
+        """
+        messages.info(
+            self.request,
+            f"{model._meta.verbose_name.capitalize()} was already deleted.",
+        )
+        return HttpResponse(
+            """
+            <script>
+                $('#deleteConfirmation').removeClass('oh-modal--show');
+                $('#deleteConfirmationBody').empty();
+                $('#reloadMessagesButton').click();
+            </script>
+            """
+        )
+
     def get(self, *args, **kwargs):
         """
         GET method
@@ -334,7 +353,10 @@ class HorillaDeleteConfirmationView(View):
             return render(self.request, "no_perm.html")
         model = apps.get_model(app, MODEL_NAME)
 
-        delete_object = model.objects.get(pk=pk)
+        try:
+            delete_object = model.objects.get(pk=pk)
+        except model.DoesNotExist:
+            return self.deleted_response(model)
         objs = [delete_object]
         using = router.db_for_write(delete_object._meta.model)
         collector = NestedObjects(using=using, origin=objs)
@@ -563,7 +585,10 @@ class HorillaDeleteConfirmationView(View):
         if not self.request.user.has_perm(app + ".delete_" + MODEL_NAME.lower()):
             return render(self.request, "no_perm.html")
         model = apps.get_model(app, MODEL_NAME)
-        delete_object = model.objects.get(pk=pk)
+        try:
+            delete_object = model.objects.get(pk=pk)
+        except model.DoesNotExist:
+            return self.deleted_response(model)
         objs = [delete_object]
         using = router.db_for_write(delete_object._meta.model)
         collector = NestedObjects(using=using, origin=objs)
